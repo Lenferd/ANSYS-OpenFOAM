@@ -127,3 +127,24 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# IDE
+.idea
+
+# ANSYS files
+*.agdb
+*.scdoc
+*.xml
+*.dat
+*.engd
+*.wbdp
+*.mechdb
+*.rst
+MECH
+
+# APDL files
+*.lock
+*.err
+*.page
+*.out
+*.bat
