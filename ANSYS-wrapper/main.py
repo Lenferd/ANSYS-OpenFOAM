@@ -1,5 +1,7 @@
 import os
 
+NEW_LINE = "\n"
+
 def is_directory_exists(dir_name):
     directory_exists = os.path.exists(dir_name)
     if not directory_exists:
@@ -44,7 +46,7 @@ class AnsysParsers:
 
 
 class AnsysExecObject:
-    commandToExecute = "ansys195.exe\n"
+    commandToExecute = "ansys195.exe" + NEW_LINE
 
     def set_input_file(self, folder, name='ds'):
         file_format = wrap_str_to_quotes('dat')
@@ -55,6 +57,27 @@ class AnsysExecObject:
         self.commandToExecute +=\
             "/INPUT,'{file_name}',{file_format},{folder_with_input},0"\
             .format(file_name=name, file_format=file_format, folder_with_input=full_pat)
+        self.commandToExecute += NEW_LINE
+
+    def add_solve_steps(self):
+        self.commandToExecute += "/STATUS,SOLU" + NEW_LINE
+        self.commandToExecute += "SOLVE" + NEW_LINE
+        self.commandToExecute += ("y" + NEW_LINE) * 2   # How the hell to avoid this trash
+        self.commandToExecute += "FINISH" + NEW_LINE
+
+    def add_save_step(self, label, component, file_name, output_dir):
+        self.commandToExecute += "/POST1" + NEW_LINE
+        self.commandToExecute += "SET,LAST" + NEW_LINE
+        self.commandToExecute += "/OUTPUT, {dir}{filename}".format(dir=output_dir, filename=file_name) + NEW_LINE
+        self.commandToExecute += "PRNSOL,{label},{component}".format(label=label, component=component) + NEW_LINE
+        self.commandToExecute += "/OUT" + NEW_LINE
+        self.commandToExecute += "/OUTPUT," + NEW_LINE
+
+    def add_stress_save_step(self, filename="stress.txt", directory=""):
+        self.add_save_step("S", "PRIN", filename, directory)
+
+    def add_deformation_save_step(self, filename="deformation.txt", directory=""):
+        self.add_save_step("U", "COMP", filename, directory)
 
     def print_command(self):
         print(self.commandToExecute)
@@ -68,6 +91,9 @@ def prepare_apdl_solution(solution_parameter, output_directory):
         dir_name = create_directory(output_directory + "/" + "-".join(params))
         print(path_to_file)
         execution_obj.set_input_file(path_to_file)
+        execution_obj.add_solve_steps()
+        execution_obj.add_stress_save_step()
+        execution_obj.add_deformation_save_step()
 
     return execution_obj
 

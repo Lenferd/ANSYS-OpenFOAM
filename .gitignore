@@ -148,3 +148,6 @@ MECH
 *.page
 *.out
 *.bat
+
+# Temp dir
+TEMP
