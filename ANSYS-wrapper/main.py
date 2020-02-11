@@ -2,6 +2,8 @@ import os
 
 NEW_LINE = "\n"
 
+# TODO Avoid duplication by creating lib. But solution will be not so portable...
+# Helpers
 def is_directory_exists(dir_name):
     directory_exists = os.path.exists(dir_name)
     if not directory_exists:
