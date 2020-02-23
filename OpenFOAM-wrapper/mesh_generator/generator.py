@@ -1,6 +1,10 @@
-from string import Template
 import sys
-from mesh_generator.mesh_template import MESH_FILE_TEMPLATE
+from string import Template
+from mesh_generator.template import MESH_FILE_TEMPLATE
+from collections import namedtuple
+
+# FIXME Global variables... meh
+Arguments = namedtuple("Arguments", "length_mm height_mm width_mm file_name")
 
 
 def calculate_points(width_mm, height_mm, length_mm):
@@ -53,7 +57,7 @@ def format_text(points, fragmentation):
 
 
 def generate_mesh(length, width, height, filename):
-    print("w: {}, h: {}, l: {}, filename: {}".format(width, height, length, filename))
+    print("w: {}\th: {}\tl: {}\tout_file: {}".format(width, height, length, filename))
     points = calculate_points(width, height, length)
     fragmentation = calculate_fragmentation(width, height, length, 20)
     text = format_text(points, fragmentation)
@@ -66,32 +70,28 @@ def generate_mesh(length, width, height, filename):
         print(text)
 
 
-if __name__ == '__main__':
-    for arg in sys.argv[1:]:
-        print(arg)
+def parse_arguments(argv):
+    parameters = Arguments
+    print("Generator arguments:")
+    print(argv)
 
-    width = 0
-    height = 0
-    length = 0
-
-    if len(sys.argv) <= 3:
+    if len(argv) <= 3:
         print("Please provide size of mesh to generate."
-              "Format: mesh_generator.py <width> <height> <length> <file_to_save>")
+              "Format: generator.py <width> <height> <length> <file_to_save>")
         exit(0)
 
-    if len(sys.argv) > 3:
-        width = int(sys.argv[1])
-        height = int(sys.argv[2])
-        length = int(sys.argv[3])
+    if len(argv) > 3:
+        parameters.width_mm = int(argv[1])
+        parameters.height_mm = int(argv[2])
+        parameters.length_mm = int(argv[3])
 
-    if len(sys.argv) > 4:
-        filename = str(sys.argv[4])
+    if len(argv) > 4:
+        parameters.file_name = str(argv[4])
     else:
-        filename = 0
+        parameters.file_name = 0
 
-    print("hello there")
-    print("General Kenobi")
-    generate_mesh(length, width, height, filename)
+    return parameters
+
 
 
 

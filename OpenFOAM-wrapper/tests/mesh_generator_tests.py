@@ -1,7 +1,7 @@
 import unittest
 import os
 from utils import files
-from mesh_generator.mesh_generator import generate_mesh
+from mesh_generator.generator import generate_mesh
 
 
 class MeshGenerator(unittest.TestCase):

@@ -1,8 +1,11 @@
 import os
 import re
-import datetime
 
 from utils import files
+from mesh_generator import generator
+import subprocess
+from utils.messages import ERROR
+
 
 def check_params(params):
     if len(params) != 2:
@@ -11,19 +14,24 @@ def check_params(params):
         exit(-1)
 
 
-def wrap_str_to_quotes(str):
-    return '\'' + str + '\''
-
-
 def generate_mesh(w, h, l):
-    os.system('pwd')
-    os.system("python mesh_generator.py {} {} {} system/blockMeshDict".format(w, h, l))
-    print("\n\n\n ===== Run block mesh generating")
-    os.system('blockMesh')
+    file_name = "system/blockMeshDict"
+    print("\n\n ===== Run geometry generating")
+    generator.generate_mesh(w, h, l, file_name)
+    print("\n\n ===== Run block mesh generating")
+    try:
+        subprocess.call(['blockMesh'])
+    except OSError:
+        print(ERROR+"blockMesh not found. Please check that you have prepared OpenFOAM environment")
+    print("\n\n ===== End block mesh generating") # Just because there a lots of logs from blockMesh command
 
 
 def run_execution(filename):
     os.system("solidEquilibriumDisplacementFoamMod > {}".format(filename))
+    # TODO refactor to throw exception
+    # except OSError:
+    #     print(ERROR + "solidEquilibriumDisplacementFoamMod not found."
+    #                   "Please make sure you are using modified version of OpenFOAM")
 
 
 sw = {}
@@ -69,11 +77,10 @@ def parse_output(paramToParse, filename, logfile, params):
     #     log_file.write("{}\t{}\t{}\t{}\n".format(params[0], params[1], params[2], max_sigma))
 
 
-logfile = ""
 def run(w, h, l):
     out_folder = "out/"
     files.create_directory(out_folder)
-    print("\n\n\n ==== Ranges:\nw_range: {}\nh_range: {}\nl_range: {}".format(w_range, h_range, l_range))
+
     generate_mesh(w, h, l)
     params = "w{}_h{}_l{}".format(w, h, l)
     filename = "{}result_{}.txt".format(out_folder, params)
@@ -82,24 +89,8 @@ def run(w, h, l):
     # print(datetime.datetime.now().strftime("%H:%M:%S"))
 
     run_execution(filename)
-    parse_output("sigma", filename, logfile+"-sigma", [w,h,l])
-    parse_output("D", filename, logfile+"-D", [w,h,l])
+    # parse_output("sigma", filename, logfile+"-sigma", [w,h,l])
+    # parse_output("D", filename, logfile+"-D", [w,h,l])
 
-
-if __name__ == '__main__':
-    # max w = 100, h = 100, l = 1000
-    # We should iterate  over all params from 10 to 100
-    w_range = list(range(20, 101, 10))
-    h_range = list(range(20, 101, 10))
-    l_range = [1000]
-
-    out_folder = "out/"
-    global logfile
-    logfile = datetime.datetime.now().strftime("{}%Y-%m-%d-%H-%M.out".format(out_folder))
-
-    for l in l_range:
-        for w in w_range:
-            for h in h_range:
-                run(w, h, l)
 
 
