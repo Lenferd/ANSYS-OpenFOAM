@@ -2,24 +2,7 @@ import os
 import re
 import datetime
 
-# TODO Avoid duplication by creating lib. But solution will be not so portable...
-# Helpers
-def is_directory_exists(dir_name):
-    directory_exists = os.path.exists(dir_name)
-    if not directory_exists:
-        print("Directory {} not exists".format(dir_name))
-    return directory_exists
-
-
-def create_directory(dir_name):
-    if not is_directory_exists(dir_name):
-        os.makedirs(dir_name)
-    return dir_name
-
-
-def list_all_dirs_in_folder(folder_name):
-    return os.listdir(folder_name)
-
+from utils import files
 
 def check_params(params):
     if len(params) != 2:
@@ -34,7 +17,7 @@ def wrap_str_to_quotes(str):
 
 def generate_mesh(w, h, l):
     os.system('pwd')
-    os.system("python blockMeshGenerator.py {} {} {} system/blockMeshDict".format(w, h, l))
+    os.system("python mesh_generator.py {} {} {} system/blockMeshDict".format(w, h, l))
     print("\n\n\n ===== Run block mesh generating")
     os.system('blockMesh')
 
@@ -89,7 +72,7 @@ def parse_output(paramToParse, filename, logfile, params):
 logfile = ""
 def run(w, h, l):
     out_folder = "out/"
-    create_directory(out_folder)
+    files.create_directory(out_folder)
     print("\n\n\n ==== Ranges:\nw_range: {}\nh_range: {}\nl_range: {}".format(w_range, h_range, l_range))
     generate_mesh(w, h, l)
     params = "w{}_h{}_l{}".format(w, h, l)
