@@ -54,12 +54,8 @@ def format_text(points, fragmentation):
 
 def generate_mesh(length, width, height, filename):
     print("w: {}, h: {}, l: {}, filename: {}".format(width, height, length, filename))
-    # FIXME Temporary recast
-    w = width
-    l = length
-    h = height
-    points = calculate_points(w, h, l)
-    fragmentation = calculate_fragmentation(w, h, l, 20)
+    points = calculate_points(width, height, length)
+    fragmentation = calculate_fragmentation(width, height, length, 20)
     text = format_text(points, fragmentation)
     # print(text.format(points))
     if filename != 0:
@@ -74,27 +70,28 @@ if __name__ == '__main__':
     for arg in sys.argv[1:]:
         print(arg)
 
-    w = 10
-    h = 10
-    l = 100
+    width = 0
+    height = 0
+    length = 0
+
+    if len(sys.argv) <= 3:
+        print("Please provide size of mesh to generate."
+              "Format: mesh_generator.py <width> <height> <length> <file_to_save>")
+        exit(0)
 
     if len(sys.argv) > 3:
-        w = int(sys.argv[1])
-        h = int(sys.argv[2])
-        l = int(sys.argv[3])
+        width = int(sys.argv[1])
+        height = int(sys.argv[2])
+        length = int(sys.argv[3])
 
     if len(sys.argv) > 4:
         filename = str(sys.argv[4])
     else:
         filename = 0
 
-    # w = 100
-    # h = 100
-    # l = 1000
-
     print("hello there")
     print("General Kenobi")
-    generate_mesh(l, w, h, filename)
+    generate_mesh(length, width, height, filename)
 
 
 

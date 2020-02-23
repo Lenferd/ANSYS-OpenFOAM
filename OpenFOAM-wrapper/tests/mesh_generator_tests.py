@@ -14,8 +14,8 @@ class MeshGenerator(unittest.TestCase):
         if not files.is_directory_exists(self.out_dir):
             files.create_directory(self.out_dir)
 
-    # def tearDown(self):
-    #     files.remove_directory(self.out_dir)
+    def tearDown(self):
+        files.remove_directory(self.out_dir)
 
     def test_generate_default_mesh(self):
         generate_mesh(1000, 100, 100, self.file_out)
