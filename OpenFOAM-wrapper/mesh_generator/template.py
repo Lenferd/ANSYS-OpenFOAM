@@ -70,6 +70,23 @@ boundary
             (0 1 2 3)
         );
     }
+     
+    leftSurface
+    {
+        type patch;
+        faces
+        (
+            (0 3 7 4)
+        );
+    }  
+    rightSurface
+    {
+        type patch;
+        faces
+        (
+            (1 2 6 5)
+        );
+    }
 );
 
 mergePatchPairs

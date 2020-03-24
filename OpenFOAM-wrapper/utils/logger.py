@@ -15,7 +15,9 @@ class Logger:
         self.log_lvl = LogLvl.LOG_INFO
 
     def log(self, msg_log_lvl=LogLvl.LOG_INFO, message=""):
-        print(self._generate_message(msg_log_lvl, message))
+        generated_msg = self._generate_message(msg_log_lvl, message)
+        if len(generated_msg):
+            print(generated_msg)
 
     def error(self, message):
         self.log(LogLvl.LOG_ERROR, message)

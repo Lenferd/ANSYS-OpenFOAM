@@ -1,9 +1,9 @@
 import subprocess
 from string import Template
 from mesh_generator.template import MESH_FILE_TEMPLATE
-from utils.logger import Logger, LogLvl
 from configs.mesh import MeshConfig
 from configs.fragmentation import FragmentationConfig
+from utils.logger import Logger, LogLvl
 
 _logger = Logger(LogLvl.LOG_INFO)
 
