@@ -2,37 +2,37 @@ import sys
 from mesh_generator.generator import MeshGenerator
 from configs.mesh import MeshConfig
 from configs.fragmentation import FragmentationConfig
-
-
-def parse_arguments(argv):
-    print("Generator arguments:")
-    print(argv)
-
-    if len(argv) <= 3:
-        print("Please provide size of mesh to generate."
-              "Format: generator.py <width> <height> <length> <file_to_save>")
-        exit(0)
-
-    mesh_conf = MeshConfig()
-    # TODO Specify also fragmentation
-    fragmentation_conf = FragmentationConfig()
-
-    if len(argv) > 3:
-        mesh_conf.width_mm = int(argv[1])
-        mesh_conf.height_mm = int(argv[2])
-        mesh_conf.length_mm = int(argv[3])
-
-    if len(argv) > 4:
-        file_name = str(argv[4])
-    else:
-        file_name = ""
-
-    return {"mesh_conf": mesh_conf, "fragmentation_conf": fragmentation_conf, "file_name": file_name}
-
+import argparse
 
 if __name__ == '__main__':
-    params = parse_arguments(sys.argv)
-    # params = parse_arguments(["", "100", "100", "1000"])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-gw", "--geom_width", type=int, help="Geometry object width in mm")
+    parser.add_argument("-gh", "--geom_height", type=int, help="Geometry object height in mm")
+    parser.add_argument("-gl", "--geom_length", type=int, help="Geometry object length in mm")
 
-    mesh = MeshGenerator(params.get("mesh_conf"), params.get("fragmentation_conf"))
-    mesh.generate(params.get("file_name"))
+    parser.add_argument("-fw", "--fragmentation_width", type=int, help="Fragmentation on width axes (X)")
+    parser.add_argument("-fh", "--fragmentation_height", type=int, help="Fragmentation on height axes (Y)")
+    parser.add_argument("-fl", "--fragmentation_length", type=int, help="Fragmentation on length axes (Z)")
+
+    parser.add_argument("-o", "--output_file", type=str, help="Save mesh description to specified file")
+    args = parser.parse_args()
+
+    mesh_conf = MeshConfig()
+    # TODO How to avoid this duplication?
+    if args.geom_width:
+        mesh_conf.width_mm = args.geom_width
+    if args.geom_height:
+        mesh_conf.height_mm = args.geom_height
+    if args.geom_length:
+        mesh_conf.length_mm = args.geom_length
+
+    fragmentation_conf = FragmentationConfig()
+    if args.fragmentation_width:
+        fragmentation_conf.width = args.fragmentation_width
+    if args.fragmentation_height:
+        fragmentation_conf.height = args.fragmentation_height
+    if args.fragmentation_length:
+        fragmentation_conf.length = args.fragmentation_length
+
+    mesh = MeshGenerator(mesh_conf, fragmentation_conf)
+    mesh.generate(args.output_file)

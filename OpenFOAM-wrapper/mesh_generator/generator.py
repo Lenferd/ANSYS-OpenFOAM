@@ -15,7 +15,7 @@ class MeshGenerator:
 
         self.out_file = "system/blockMeshDict"
 
-    def generate(self, custom_out_file=""):
+    def generate(self, custom_out_file=None):
         _logger.info("\n\n===== Run geometry generating")
         self.__print_configuration()
 
@@ -25,7 +25,7 @@ class MeshGenerator:
         text = self.__format_text()
 
         file_to_write = self.out_file
-        if len(custom_out_file):
+        if (custom_out_file is not None) and (len(custom_out_file)):
             file_to_write = custom_out_file
 
         self.__save_geometry(text, file_to_write)
