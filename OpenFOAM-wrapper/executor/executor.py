@@ -5,18 +5,10 @@ import re
 from utils import files
 from mesh_generator.generator import MeshGenerator, MeshConfig, FragmentationConfig
 from configs.execution import ExecutionConfig
-import subprocess
 from utils.logger import Logger, LogLvl
 
 _logger = Logger(LogLvl.LOG_INFO)
 
-
-# sw = {}
-# sh = {}
-# sw["sigma"] = 0
-# sw["D"] = 0
-# sh["sigma"] = 0
-# sh["D"] = 0
 
 class Executor:
     def __init__(self, exec_conf: ExecutionConfig, mesh_conf: MeshConfig, fragmentation_conf: FragmentationConfig):
@@ -46,35 +38,12 @@ class Executor:
 
     def run(self):
         _logger.info("\n\n===== Run calculation")
-        # out_folder = "out/"
-        # files.create_directory(out_folder)
-
-        # generate_mesh(w, h, l, mesh_config)
-        # params = "w{}_h{}_l{}".format(w, h, l)
-
-        # length_fragmentation = mesh_config.get("length_fragmentation")
-        # height_fragmentation = mesh_config.get("height_fragmentation")
-        # width_fragmentation = mesh_config.get("width_fragmentation")
-        # mesh_params = "sw{}_sh{}_sl{}".format(width_fragmentation, height_fragmentation, length_fragmentation)
-
-        # filename = "{}result_{}_{}.txt".format(out_folder, params, mesh_params)
-
-        # %Y-%m-%d %H:%M:%S
-        # print(datetime.datetime.now().strftime("%H:%M:%S"))
-
-        out_folder = "out/"
-        # logfile = datetime.datetime.now().strftime("{}%Y-%m-%d-%H.out".format(out_folder))
-
         self.__run_execution()
         _logger.info("===== End calculation\n\n")
-        # parse_output("sigma", filename, logfile+"-sigma", [w,h,l])
-        # parse_output("D", filename, logfile+"-D", [w,h,l])
 
         _logger.info("\n\n===== Run result parsing")
         self.__parse_output_from_file("sigma")
         self.__parse_output_from_file("D")
-        # parse_output_from_file("D",  self.result_file, self.parsing_result_file + "-SD",
-        #                        [width_fragmentation, height_fragmentation, length_fragmentation])
         _logger.info("===== End result parsing\n\n")
 
     def __run_execution(self):
@@ -84,7 +53,7 @@ class Executor:
         #     print(ERROR + "solidEquilibriumDisplacementFoamMod not found."
         #                   "Please make sure you are using modified version of OpenFOAM")
 
-    # Also parse time
+    # TODO Also parse time
     def __parse_output(self, param_to_parse, text):
         _logger.debug("Parse: {}".format(param_to_parse))
 
@@ -93,9 +62,6 @@ class Executor:
 
         _logger.debug(text[start_index:start_index + len])
 
-        # All inside (58779.5 13647 74094.2 57.0585 277569 0)
-        # p = re.compile('\d+\.*\d+')
-        # p = re.compile(r'[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?')
         # (.123 250000 1.00009e+06 160325 7.29635e-10 2.36271e+06 0 -2.40131e-45 5.12455e-06 2.01673e-06 1.18136e-05)
         p = re.compile(r'[-+]?[0-9]*\.?[0-9]+[eE]?[-+]?[0-9]*')
         values = p.findall(text[start_index:start_index + len])
@@ -124,21 +90,6 @@ class Executor:
                                "\t{}".format(param_to_parse))
             log_file.write(formatted_result)
 
-        # w = params[0]
-        # global sw
-        # with open(logfile, "a") as log_file:
-        #     if os.stat(logfile).st_size == 0:
-        #         log_file.write("w rows, h collums, values is max {}\n".format(params_to_parse))
-        #     if w != sw[params_to_parse]:  # not as prev
-        #         log_file.write("\n")
-        #     log_file.write("{}\t".format(max_sigma))
-        #     sw[params_to_parse] = w
-        # with open(logfile, "a") as log_file:
-        #     if os.stat(logfile).st_size == 0:
-        #         log_file.write("{}\t{}\t{}\t{}\n".format("w", "h", "l", "max_sigma"))
-        #     log_file.write("{}\t{}\t{}\t{}\n".format(params[0], params[1], params[2], max_sigma))
-
-    # FIXME Only geometry change for now
     def __parse_output_from_file(self, param_to_parse):
         with open(self.result_file, 'rt') as file:
             contents = file.read()

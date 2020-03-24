@@ -1,8 +1,8 @@
 import datetime
-from runner.runner import run
+from executor.executor import run
+from utils.arg_parser import Arguments
+import sys
 
-# FIXME Global variables... meh
-Arguments = namedtuple("Arguments", "length_mm height_mm width_mm file_name")
 
 def parse_arguments(argv):
     parameters = Arguments
