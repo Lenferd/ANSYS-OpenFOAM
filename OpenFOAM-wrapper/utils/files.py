@@ -1,5 +1,8 @@
 import os
 import shutil
+from utils.logger import Logger, LogLvl
+
+_logger = Logger(LogLvl.LOG_ERROR)
 
 # Creation
 
@@ -7,19 +10,21 @@ import shutil
 def is_directory_exists(dir_name):
     directory_exists = os.path.exists(dir_name)
     if not directory_exists:
-        print("Directory {} not exists".format(dir_name))
+        _logger.info("Directory \"{}\" not exists".format(dir_name))
     return directory_exists
 
 
 def create_directory(dir_name):
     if not is_directory_exists(dir_name):
         os.makedirs(dir_name)
+        _logger.info("Creating directory {}".format(dir_name))
     return dir_name
 
 
 def remove_directory(dir_name):
     if is_directory_exists(dir_name):
         shutil.rmtree(dir_name)
+        _logger.info("Removing directory {}".format(dir_name))
 
 # Query
 
@@ -38,9 +43,9 @@ def equal(fname1, fname2):
     files_equal = True
 
     # Print confirmation
-    print("-----------------------------------")
-    print("Comparing files ", " > " + fname1, " < " + fname2, sep='\n')
-    print("-----------------------------------")
+    _logger.info("-----------------------------------")
+    _logger.info("Comparing files\n > " + fname1 + "\n < " + fname2)
+    _logger.info("-----------------------------------")
 
     # Read the first line from the files
     f1_line = f1.readline()
