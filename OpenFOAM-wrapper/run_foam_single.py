@@ -1,4 +1,3 @@
-
 from executor.executor import Executor
 from argparse import ArgumentParser
 from configs.mesh import MeshConfig, MeshArguments

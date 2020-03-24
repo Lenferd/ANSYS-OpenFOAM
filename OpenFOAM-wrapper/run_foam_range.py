@@ -1,46 +1,27 @@
-import datetime
-from executor.executor import run
-from utils.arg_parser import Arguments
-import sys
-
-
-def parse_arguments(argv):
-    parameters = Arguments
-    for arg in sys.argv[1:]:
-        print(arg)
-    if len(argv) <= 3:
-        print("Please provide size of mesh to generate."
-              "Format: generator.py <width> <height> <length> <file_to_save>")
-        exit(0)
-
-    if len(argv) > 3:
-        parameters.width_mm = int(argv[1])
-        parameters.height_mm = int(argv[2])
-        parameters.length_mm = int(argv[3])
-
-    if len(argv) > 4:
-        parameters.file_name = str(argv[4])
-    else:
-        parameters.file_name = 0
-
-    return parameters
-
+from executor.executor import Executor
+from argparse import ArgumentParser
+from configs.mesh import MeshConfig, MeshArguments
+from configs.fragmentation import FragmentationConfig, FragmentationArguments
+from configs.execution import ExecutionConfig, ExecutionArguments
+from mesh_generator.generator import MeshGenerator
 
 if __name__ == '__main__':
-    # max w = 100, h = 100, l = 1000
-    # We should iterate  over all params from 10 to 100
-    w_range = list(range(20, 101, 10))
-    h_range = list(range(20, 101, 10))
-    l_range = [1000]
+    parser = ArgumentParser()
+    MeshArguments.add_geometry_argument_iter(parser)
+    FragmentationArguments.add_fragmentation_arguments(parser)
+    ExecutionArguments.add_execution_arguments(parser)
+    args = parser.parse_args()
 
-    print("\n\n\n ==== Ranges:\nw_range: {}\nh_range: {}\nl_range: {}".format(w_range, h_range, l_range))
+    fragmentation_conf = FragmentationConfig.create_from_args(args)
+    execution_conf = ExecutionConfig.create_from_args(args)
 
-    out_folder = "out/"
-    global logfile
-    logfile = datetime.datetime.now().strftime("{}%Y-%m-%d-%H-%M.out".format(out_folder))
+    # TODO No fragmentation iters for now
+    for width in range(args.geom_width_start, args.geom_width_end + 1, args.geom_width_diff):
+        for height in range(args.geom_height_start, args.geom_height_end + 1, args.geom_height_diff):
+            for length in range(args.geom_length_start, args.geom_length_end + 1, args.geom_length_diff):
+                mesh_conf = MeshConfig(width, height, length)
+                mesh = MeshGenerator(mesh_conf, fragmentation_conf)
+                mesh.generate(args.geometry_output)
 
-    for l in l_range:
-        for w in w_range:
-            for h in h_range:
-                run(w, h, l)
-
+                executor = Executor(execution_conf, mesh_conf, fragmentation_conf)
+                executor.run()

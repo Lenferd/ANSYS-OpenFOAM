@@ -79,15 +79,15 @@ class Executor:
 
         # Save result to file
         file_parsed_result = "{}{}-{}".format(self.result_dir, param_to_parse, self.parsed_name)
-        formatted_result = "{geometry}{fragmentation}{value}".format(geometry=self.mesh_values,
-                                                                     fragmentation=self.fragmentation_values,
-                                                                     value=max_value)
+        formatted_result = "{geometry}\t\t{fragmentation}\t{value}\n".format(geometry=self.mesh_values,
+                                                                       fragmentation=self.fragmentation_values,
+                                                                       value=max_value)
 
         with open(file_parsed_result, "a") as log_file:
             if os.stat(file_parsed_result).st_size == 0:
                 log_file.write("Geometry width\tGeometry height\tGeometry length"
                                "\tFragmentation width\tFragmentation height\tFragmentation length"
-                               "\t{}".format(param_to_parse))
+                               "\t{}\n".format(param_to_parse))
             log_file.write(formatted_result)
 
     def __parse_output_from_file(self, param_to_parse):
