@@ -4,7 +4,8 @@ from utils.logger import LogLvl, Logger
 
 class LoggerForTests(Logger):
     def log(self, msg_log_lvl=LogLvl.LOG_INFO, message=""):
-        return self._generate_message(msg_log_lvl, message)
+        message = self._generate_message(msg_log_lvl, message)
+        return message
 
 
 class TestLogger(TestCase):
@@ -26,3 +27,8 @@ class TestLogger(TestCase):
         log_msg = self.logger.log(LogLvl.LOG_INFO, message)
         self.assertEqual(expected_message, log_msg)
 
+    def test_list_to_log(self):
+        a_list = ["123", "32"]
+        log_msg = self.logger.log(message=a_list)
+        self.assertNotEqual(-1, log_msg.find(a_list[0]))
+        self.assertNotEqual(-1, log_msg.find(a_list[1]))

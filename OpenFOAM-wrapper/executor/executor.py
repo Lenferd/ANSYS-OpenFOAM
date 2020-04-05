@@ -3,7 +3,8 @@ import os
 import re
 
 from utils import files
-from mesh_generator.generator import MeshGenerator, MeshConfig, FragmentationConfig
+from mesh_generator.simple_generator import SimpleBlockMeshConfig, FragmentationConfig
+from mesh_generator.rail_generator import RailMeshConfig
 from configs.execution import ExecutionConfig
 from utils.logger import Logger, LogLvl
 
@@ -11,18 +12,47 @@ _logger = Logger(LogLvl.LOG_INFO)
 
 
 class Executor:
-    def __init__(self, exec_conf: ExecutionConfig, mesh_conf: MeshConfig, fragmentation_conf: FragmentationConfig):
+    # openfoam_solver = "solidEquilibriumDisplacementFoamMod"
+    openfoam_solver = "solidDisplacementFoamMod"
+
+    _logger.info("Solver: {}".format(openfoam_solver))
+
+    def __init__(self, exec_conf: ExecutionConfig, mesh_conf, fragmentation_conf: FragmentationConfig):
         self.result_dir = exec_conf.output_dir
         files.create_directory(self.result_dir)
 
-        mesh_options_line = "gw{}_gh{}_gl{}".format(
-            mesh_conf.width_mm,
-            mesh_conf.height_mm,
-            mesh_conf.length_mm)
-        self.mesh_values = "{}\t{}\t{}".format(
-            mesh_conf.width_mm,
-            mesh_conf.height_mm,
-            mesh_conf.length_mm)
+        result_file_geom_prefix = None
+        if type(mesh_conf) is SimpleBlockMeshConfig:
+            result_file_geom_prefix = "gw{}_gh{}_gl{}".format(
+                mesh_conf.width_mm,
+                mesh_conf.height_mm,
+                mesh_conf.length_mm)
+            self.geom_values = "{}\t{}\t{}".format(
+                mesh_conf.width_mm,
+                mesh_conf.height_mm,
+                mesh_conf.length_mm)
+            self.geom_titles = "Geometry width\tGeometry height\tGeometry length"
+        else:
+            result_file_geom_prefix = ""
+            self.geom_values = ""
+            self.geom_titles = ""
+
+            for line_idx in range(len(mesh_conf.width_lines)):
+                result_file_geom_prefix += "w{}={}_".format(line_idx, mesh_conf.width_lines[line_idx])
+                self.geom_titles += "{} {}\t".format("Width line", line_idx)
+                self.geom_values += "{}\t".format(mesh_conf.width_lines[line_idx])
+
+            for line_idx in range(len(mesh_conf.height_distance)):
+                result_file_geom_prefix += "h{}={}_".format(line_idx, mesh_conf.height_distance[line_idx])
+                self.geom_titles += "{} {}\t".format("Height line", line_idx)
+                self.geom_values += "{}\t".format(mesh_conf.height_distance[line_idx])
+
+            result_file_geom_prefix += "l={}".format(mesh_conf.length)
+            self.geom_titles += "{}".format("Length")
+            self.geom_values += "{}".format(mesh_conf.length)
+
+        _logger.debug(result_file_geom_prefix)
+        _logger.debug(self.geom_values)
 
         fragmentation_options_line = "fw{}_fh{}_fl{}".format(
             fragmentation_conf.width,
@@ -33,7 +63,7 @@ class Executor:
             fragmentation_conf.height,
             fragmentation_conf.length)
 
-        self.result_file = "{}result_{}_{}.txt".format(self.result_dir, mesh_options_line, fragmentation_options_line)
+        self.result_file = "{}result_{}_{}.txt".format(self.result_dir, result_file_geom_prefix, fragmentation_options_line)
         self.parsed_name = datetime.datetime.now().strftime("%Y-%m-%d-%H.txt")
 
     def run(self):
@@ -48,7 +78,7 @@ class Executor:
         _logger.info("===== End result parsing\n\n")
 
     def __run_execution(self):
-        os.system("solidDisplacementFoamMod > {}".format(self.result_file))
+        os.system("{} > {}".format(self.openfoam_solver, self.result_file))
         # TODO refactor to throw exception
         # except OSError:
         #     print(ERROR + "solidEquilibriumDisplacementFoamMod not found."
@@ -63,15 +93,15 @@ class Executor:
         # Save result to file
         file_parsed_result = "{}{}-{}".format(self.result_dir, "time", self.parsed_name)
         formatted_result = "{geometry}\t{fragmentation}\t{exec_time}\t{clock_time}\n".format(
-            geometry=self.mesh_values,
+            geometry=self.geom_values,
             fragmentation=self.fragmentation_values,
             exec_time=exec_time, clock_time=clock_time)
 
         with open(file_parsed_result, "a") as log_file:
             if os.stat(file_parsed_result).st_size == 0:
-                log_file.write("Geometry width\tGeometry height\tGeometry length"
+                log_file.write("{}"
                                "\tFragmentation width\tFragmentation height\tFragmentation length"
-                               "\t{}\t{}\n".format("Execution time", "Clock time"))
+                               "\t{}\t{}\n".format(self.geom_titles, "Execution time", "Clock time"))
             log_file.write(formatted_result)
 
     def __parse_output(self, param_to_parse, text):
@@ -99,15 +129,15 @@ class Executor:
 
         # Save result to file
         file_parsed_result = "{}{}-{}".format(self.result_dir, param_to_parse, self.parsed_name)
-        formatted_result = "{geometry}\t{fragmentation}\t{value}\n".format(geometry=self.mesh_values,
+        formatted_result = "{geometry}\t{fragmentation}\t{value}\n".format(geometry=self.geom_values,
                                                                            fragmentation=self.fragmentation_values,
                                                                            value=max_value)
 
         with open(file_parsed_result, "a") as log_file:
             if os.stat(file_parsed_result).st_size == 0:
-                log_file.write("Geometry width\tGeometry height\tGeometry length"
+                log_file.write("{}"
                                "\tFragmentation width\tFragmentation height\tFragmentation length"
-                               "\t{}\n".format(param_to_parse))
+                               "\t{}\n".format(self.geom_titles, param_to_parse))
             log_file.write(formatted_result)
 
     def __parse_output_from_file(self, param_to_parse):

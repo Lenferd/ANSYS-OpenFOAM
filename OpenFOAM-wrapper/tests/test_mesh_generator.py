@@ -1,8 +1,8 @@
 import unittest
 import os
 from utils import files
-from mesh_generator.generator import MeshGenerator
-from configs.mesh import MeshConfig
+from mesh_generator.simple_generator import SimpleBlockMeshGenerator
+from configs.mesh import SimpleBlockMeshConfig
 from configs.fragmentation import FragmentationConfig
 
 
@@ -23,10 +23,10 @@ class MeshGeneratorTests(unittest.TestCase):
         files.remove_directory(self.out_dir)
 
     def test_generate_default_mesh(self):
-        mesh_conf = MeshConfig(self.width_mm, self.height_mm, self.length_mm)
+        mesh_conf = SimpleBlockMeshConfig(self.width_mm, self.height_mm, self.length_mm)
         fragmentation_conf = FragmentationConfig()
-        mesh = MeshGenerator(mesh_conf, fragmentation_conf)
-        mesh.generate(self.file_out)
+        mesh = SimpleBlockMeshGenerator(mesh_conf, fragmentation_conf)
+        mesh.create(self.file_out)
         self.assertTrue(files.equal(self.file_out, self.reference_file))
 
 
