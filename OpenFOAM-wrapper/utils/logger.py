@@ -29,8 +29,19 @@ class Logger:
         self.log(LogLvl.LOG_DEBUG, message)
 
     def _generate_message(self, msg_log_lvl=LogLvl.LOG_INFO, message=""):
+        if type(message) is list:
+            message = list_to_formatted_string(message)
+        if type(message) is int:
+            message = str(message)
         if self.log_lvl >= msg_log_lvl:
             message = message.replace('\n', '\n' + msg_log_lvl.to_str())
-            return "{header}{body}".format(header=msg_log_lvl.to_str(), body=message)
+            message = "{header}{body}".format(header=msg_log_lvl.to_str(), body=message)
+            return message
         else:
             return ""
+
+
+def list_to_formatted_string(alist: list):
+    format_list = ['{:>3}' for item in alist]
+    s = ' '.join(format_list)
+    return s.format(*alist)
