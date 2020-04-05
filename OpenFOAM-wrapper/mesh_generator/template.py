@@ -70,7 +70,7 @@ boundary
             (0 1 2 3)
         );
     }
-     
+
     leftSurface
     {
         type patch;
@@ -78,7 +78,7 @@ boundary
         (
             (0 3 7 4)
         );
-    }  
+    }
     rightSurface
     {
         type patch;
@@ -95,3 +95,13 @@ mergePatchPairs
 
 // ************************************************************************* //
 """
+
+BOUNDARY_TEMPLATE = \
+    r"""    $name
+    {
+        type patch;
+        faces
+        (
+$faces
+        );
+    }"""

@@ -11,6 +11,9 @@ _logger = Logger(LogLvl.LOG_INFO)
 
 
 class Executor:
+    openfoam_solver = "solidEquilibriumDisplacementFoamMod"
+    # openfoam_solver = "solidDisplacementFoamMod"
+
     def __init__(self, exec_conf: ExecutionConfig, mesh_conf: MeshConfig, fragmentation_conf: FragmentationConfig):
         self.result_dir = exec_conf.output_dir
         files.create_directory(self.result_dir)
@@ -48,7 +51,7 @@ class Executor:
         _logger.info("===== End result parsing\n\n")
 
     def __run_execution(self):
-        os.system("solidDisplacementFoamMod > {}".format(self.result_file))
+        os.system("{} > {}".format(self.openfoam_solver, self.result_file))
         # TODO refactor to throw exception
         # except OSError:
         #     print(ERROR + "solidEquilibriumDisplacementFoamMod not found."
