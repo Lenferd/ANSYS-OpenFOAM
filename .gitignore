@@ -130,6 +130,9 @@ dmypy.json
 
 # IDE
 .idea
+cmake-build-debug
+cmake-build-release
+bin
 
 # ANSYS files
 *.agdb
@@ -151,3 +154,7 @@ MECH
 
 # Temp dir
 TEMP
+
+# VS
+*.pdb
+*.obj

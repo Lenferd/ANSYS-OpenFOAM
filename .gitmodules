@@ -1,0 +1,3 @@
+[submodule "GOTE/problem/thirdparty/googletest"]
+	path = GOTE/problem/thirdparty/googletest
+	url = https://github.com/google/googletest.git
