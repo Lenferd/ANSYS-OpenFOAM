@@ -11,8 +11,8 @@ class LogLvl(IntEnum):
 
 
 class Logger:
-    def __init__(self, log_lvl):
-        self.log_lvl = LogLvl.LOG_INFO
+    def __init__(self, log_lvl=LogLvl.LOG_INFO):
+        self.log_lvl = log_lvl
 
     def log(self, msg_log_lvl=LogLvl.LOG_INFO, message=""):
         generated_msg = self._generate_message(msg_log_lvl, message)
@@ -34,3 +34,6 @@ class Logger:
             return "{header}{body}".format(header=msg_log_lvl.to_str(), body=message)
         else:
             return ""
+
+    def set_level(self, log_lvl):
+        self.log_lvl = log_lvl

@@ -11,7 +11,7 @@ class LogLvl(IntEnum):
 
 
 class Logger:
-    def __init__(self, log_lvl):
+    def __init__(self, log_lvl=LogLvl.LOG_INFO):
         self.log_lvl = log_lvl
 
     def log(self, msg_log_lvl=LogLvl.LOG_INFO, message=""):

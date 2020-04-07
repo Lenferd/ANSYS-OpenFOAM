@@ -3,7 +3,7 @@ from utils.logger import Logger, LogLvl
 import matplotlib.pyplot as plt
 import numpy as np
 
-_logger = Logger(LogLvl.LOG_DEBUG)
+_logger = Logger(LogLvl.LOG_ERROR)
 
 
 class Task:
@@ -48,9 +48,16 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("x", type=float, help="x argument")
     parser.add_argument("-v", "--view_plot", type=bool, help="show plot of task")
+    parser.add_argument("-l", "--log_lvl", type=int, help="Log Lvl. 0 - LOG_ERROR")
     args = parser.parse_args()
 
+    if args.log_lvl is not None:
+        _logger.set_level(args.log_lvl)
+
     task = Task()
-    task.function(x=args.x)
+    y = task.function(x=args.x)
     if args.view_plot:
         task.plot()
+
+    print("Result: {}".format(y))
+    print("Restriction: {}".format(y))
