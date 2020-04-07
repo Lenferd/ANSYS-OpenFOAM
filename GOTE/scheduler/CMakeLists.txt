@@ -16,4 +16,4 @@ include_directories(include)
 file(GLOB_RECURSE  HEADERS "*.h")
 file(GLOB_RECURSE  SOURCES "*.cpp")
 
-add_library(${target} STATIC ${HEADERS} ${SOURCES})
+add_library(${target} STATIC ${HEADERS} ${SOURCES} src/scheduler.cpp)
