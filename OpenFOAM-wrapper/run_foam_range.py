@@ -22,6 +22,6 @@ if __name__ == '__main__':
                 mesh_conf = SimpleBlockMeshConfig(width, height, length)
                 mesh = SimpleBlockMeshGenerator(mesh_conf, fragmentation_conf)
                 mesh.create()
-
+                mesh.generate()
                 executor = Executor(execution_conf, mesh_conf, fragmentation_conf)
                 executor.run()
