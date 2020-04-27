@@ -8,93 +8,78 @@ from configs.execution import ExecutionConfig, ExecutionArguments
 from mesh_generator.simple_generator import SimpleBlockMeshGenerator
 from mesh_generator.rail_generator import RailMeshGenerator
 
-
 from sys import argv
 
-def constraint0(points):
-    # -y
-    print(-points[1])
+# TODO use subprocess.getoutput()
 
-
-def constraint1(points):
-    #     -x
-    print(-points[0])
-
-
-def constraint2(points):
-    x = points[0]
-    y = points[1]
-    k = 0.75
-    result = k / (x * y) - 1
-    print(result)
-
-
-def criterion0(points):
-    x = points[0]
-    y = points[1]
-    result = x * y
-
-    print(result)
-
+# @brief Beam end load task, only two configurable parameters and two restrictions (3 functions)
 # @restrictions
-# 1) Stress no more then
-# @criterions
+# 1) Stress is not more than specified value
+# 2) Deformation is not more than specified value
+# @criterion
 # 1) Weight should be minimum
-#
-#
-
 class BeamSolver:
     def __init__(self):
+        self.k_max_deformation = 2.139e-6
+        self.k_max_stress = 775900
+        self.k_density = 7850
+        self.k_mm_to_m = 0.001
+
         # Create default mesh generator config and fragmentation config
-        self.mesh_cof = SimpleBlockMeshConfig()
-        self.fragmentation_conf = FragmentationConfig()
+        self.mesh_config = SimpleBlockMeshConfig()
+        self.fragmentation_config = FragmentationConfig()
         self.execution_config = ExecutionConfig()
 
-        # TODO check that specified is required
-        self.height = -1
-        self.width = -1
+        self.execution_config.execution_folder = "/home/lenferd/OpenFOAM/lenferd-v1906/run/beamEndLoad-20-04-25/"
+        self.execution_config.output_dir = self.execution_config.execution_folder + "out/"
+        self.execution_config.prepare_env_script = "$HOME/prog/scientific/openfoam/etc/bashrc"
 
-    def setPlaneSizes(self, height, width):
-        self.height = height
-        self.width = width
+    def set_plane_sizes(self, height, width):
+        self.mesh_config.length_mm = 1000
+        self.mesh_config.height_mm = height
+        self.mesh_config.width_mm = width
 
-    # Weight not more
-    def constraint0(self):
-        # FIXME
-        mesh_generator = SimpleBlockMeshGenerator()
-
-
-        mesh = mesh_generator(mesh_conf, fragmentation_conf)
+        mesh = SimpleBlockMeshGenerator(self.mesh_config, self.fragmentation_config, self.execution_config)
         mesh.create()
         mesh.generate()
 
-        executor = Executor(execution_conf, mesh_conf, fragmentation_conf)
+    # Deformation not more then
+    def constraint_0(self):
+        deformation_name = "D"
+        # FIXME execution for reproduced constrain. Need to use hash if possible
+        executor = Executor(self.execution_config, self.mesh_config, self.fragmentation_config)
         executor.run()
+        results = executor.get_results()
+        print("==== D constraint_0")
+        print(results)
+        print(results[deformation_name])
+        print(results[deformation_name] < self.k_max_deformation)
+        print(results[deformation_name] - self.k_max_deformation)
+        return results[deformation_name] - self.k_max_deformation
 
+    # Stress not more then
+    def constraint_1(self):
+        stresss_name = "D"
+        executor = Executor(self.execution_config, self.mesh_config, self.fragmentation_config)
+        executor.run()
+        results = executor.get_results()
+        print("==== stress constraint_1")
+        print(results)
+        print(results[stresss_name])
+        print(results[stresss_name] < self.k_max_stress)
+        print(results[stresss_name] - self.k_max_stress)
+        return results[stresss_name] - self.k_max_stress
 
-# def constraint0(points):
-    #     # -y
-    #     print(-points[1])
-    #
-    #
-    # def constraint1(points):
-    #     #     -x
-    #     print(-points[0])
-    #
-    #
-    # def constraint2(points):
-    #     x = points[0]
-    #     y = points[1]
-    #     k = 0.75
-    #     result = k / (x * y) - 1
-    #     print(result)
-    #
-    #
-    # def criterion0(points):
-    #     x = points[0]
-    #     y = points[1]
-    #     result = x * y
-    #     print(result)
+    # Weight (minimum should be)
+    def criterion_0(self):
+        print("==== mass criterion_0")
+        weight = self.k_density * \
+                 self.mesh_config.width_mm * self.k_mm_to_m \
+                 * self.mesh_config.height_mm * self.k_mm_to_m \
+                 * self.mesh_config.length_mm * self.k_mm_to_m
+        print(weight)
+        return weight
+
 
 if __name__ == '__main__':
     # print("BEAM SOLVER")
@@ -117,15 +102,18 @@ if __name__ == '__main__':
 
     function = dict["Function"]
     points = dict["Points"]
-
     # Create BeamSolver
 
+    beamSolver = BeamSolver()
+    # first - height, second - width
+    beamSolver.set_plane_sizes(points[0], points[1])
 
+    result = None
     if function == "constraint.0":
-        constraint0(points)
+        result = beamSolver.constraint_0()
     if function == "constraint.1":
-        constraint1(points)
-    if function == "constraint.2":
-        constraint2(points)
+        result = beamSolver.constraint_1()
     if function == "criterion.0":
-        criterion0(points)
+        result = beamSolver.criterion_0()
+
+    print("BeamSolver:[{}]".format(result))

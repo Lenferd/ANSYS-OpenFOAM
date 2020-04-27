@@ -149,6 +149,7 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
                 front_end - hex_i,
             ))
         self.boundaries_text += template.substitute(name=name, faces="\n".join(faces))
+        self.boundaries_text += "\n\n"
 
         name = "rearFixedEnd"
         faces = []
@@ -161,6 +162,7 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
             ))
         #
         self.boundaries_text += template.substitute(name=name, faces="\n".join(faces))
+        self.boundaries_text += "\n\n"
 
         name = "topSurface"
         faces = []
@@ -171,6 +173,7 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
             front_end - amount_of_hexs,
         ))
         self.boundaries_text += template.substitute(name=name, faces="\n".join(faces))
+        self.boundaries_text += "\n\n"
 
         name = "bottomSurface"
         faces = []
@@ -181,6 +184,7 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
             front_end,
         ))
         self.boundaries_text += template.substitute(name=name, faces="\n".join(faces))
+        self.boundaries_text += "\n\n"
 
         name = "rightSurface"
         faces = []
@@ -192,6 +196,7 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
                 front_start + hex_i + 1,
             ))
         self.boundaries_text += template.substitute(name=name, faces="\n".join(faces))
+        self.boundaries_text += "\n\n"
 
         name = "leftSurface"
         faces = []
@@ -203,6 +208,7 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
                 back_end - hex_i,
             ))
         self.boundaries_text += template.substitute(name=name, faces="\n".join(faces))
+        self.boundaries_text += "\n"
 
     def _format_text(self):
         t = Template(MESH_FILE_TEMPLATE)
