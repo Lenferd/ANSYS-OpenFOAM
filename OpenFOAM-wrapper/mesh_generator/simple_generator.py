@@ -3,18 +3,22 @@ from string import Template
 
 from configs.fragmentation import FragmentationConfig
 from configs.mesh import SimpleBlockMeshConfig
+from configs.execution import ExecutionConfig
 from mesh_generator.template import MESH_FILE_TEMPLATE
 from utils.logger import LogLvl, Logger
-
 _logger = Logger(LogLvl.LOG_DEBUG)
 
 
 class SimpleBlockMeshGenerator:
-    def __init__(self, mesh_config: SimpleBlockMeshConfig, fragmentation_config: FragmentationConfig):
+    def __init__(self, mesh_config: SimpleBlockMeshConfig, fragmentation_config: FragmentationConfig,
+                 execution_config: ExecutionConfig = ExecutionConfig()):
         self.mesh_config = mesh_config
         self.fragmentation_config = fragmentation_config
-
+        self.exec_config = execution_config
         self.out_file = "system/blockMeshDict"
+
+        if self.exec_config is not None:
+            self.out_file = execution_config.execution_folder + self.out_file
 
     def create(self, custom_out_file=None):
         _logger.info("\n\n===== Run geometry generating")
@@ -159,15 +163,37 @@ class SimpleBlockMeshGenerator:
     @staticmethod
     def save_geometry(text, filename):
         if filename != 0:
+            _logger.debug("Save file to: {}".format(filename))
             f = open(filename, "w+")
             f.writelines(text)
             f.close()
         else:
             print(text)
 
-    @staticmethod
-    def generate_mesh():
+    def generate_mesh(self):
+        # FIXME temporary solution
+        # FIXME Not check that is not None
+        openfoam_folder = self.exec_config.openfoam_folder
+        if self.exec_config is not None:
+            if self.exec_config.openfoam_folder is not None:
+                openfoam_folder = self.exec_config.openfoam_folder
+
+        env_script = "$HOME/prog/scientific/openfoam/etc/bashrc"
+        if self.exec_config is not None:
+            if self.exec_config.prepare_env_script is not None:
+                env_script = self.exec_config.prepare_env_script
+
+        # Make sure script have commented lines, where WM_PROJECT_DIR is set
+        prepare_call = "export WM_PROJECT_DIR=" + openfoam_folder
+        prepare_call += "; "
+        prepare_call += ". " + env_script
+        prepare_call += "; "
+        prepare_call += "cd " + self.exec_config.execution_folder
+        # exec_folder_export = "export WM_PROJECT_DIR=" + self.exec_config.openfoam_folder
+        # env_preparing = ". " + "$HOME/prog/scientific/openfoam/etc/bashrc"
         try:
-            subprocess.call(['blockMesh'])
+            # FIXME get back log for debug or info
+            # subprocess.call(["{}; {} > /dev/null".format(prepare_call, "blockMesh")], shell=True)
+            subprocess.call(["{}; {}".format(prepare_call, "blockMesh")], shell=True)
         except OSError:
             raise OSError("blockMesh not found. Please check that you have prepared OpenFOAM environment")

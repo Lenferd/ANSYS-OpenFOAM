@@ -1,6 +1,7 @@
 import datetime
 import os
 import re
+import subprocess
 
 from utils import files
 from mesh_generator.simple_generator import SimpleBlockMeshConfig, FragmentationConfig
@@ -12,15 +13,15 @@ _logger = Logger(LogLvl.LOG_INFO)
 
 
 class Executor:
-    # openfoam_solver = "solidEquilibriumDisplacementFoamMod"
-    openfoam_solver = "solidDisplacementFoamMod"
-
-    _logger.info("Solver: {}".format(openfoam_solver))
+    openfoam_solver = "solidEquilibriumDisplacementFoamMod"
+    # openfoam_solver = "solidDisplacementFoamMod"
 
     def __init__(self, exec_conf: ExecutionConfig, mesh_conf, fragmentation_conf: FragmentationConfig):
+        _logger.info("Solver: {}".format(self.openfoam_solver))
+        self.exec_config = exec_conf
         self.result_dir = exec_conf.output_dir
         files.create_directory(self.result_dir)
-
+        self.results = {}
         result_file_geom_prefix = None
         if type(mesh_conf) is SimpleBlockMeshConfig:
             result_file_geom_prefix = "gw{}_gh{}_gl{}".format(
@@ -63,7 +64,8 @@ class Executor:
             fragmentation_conf.height,
             fragmentation_conf.length)
 
-        self.result_file = "{}result_{}_{}.txt".format(self.result_dir, result_file_geom_prefix, fragmentation_options_line)
+        self.result_file = "{}result_{}_{}.txt".format(self.result_dir, result_file_geom_prefix,
+                                                       fragmentation_options_line)
         self.parsed_name = datetime.datetime.now().strftime("%Y-%m-%d-%H.txt")
 
     def run(self):
@@ -78,11 +80,17 @@ class Executor:
         _logger.info("===== End result parsing\n\n")
 
     def __run_execution(self):
-        os.system("{} > {}".format(self.openfoam_solver, self.result_file))
-        # TODO refactor to throw exception
-        # except OSError:
-        #     print(ERROR + "solidEquilibriumDisplacementFoamMod not found."
-        #                   "Please make sure you are using modified version of OpenFOAM")
+        # FIXME no check if none
+        prepare_call = "export WM_PROJECT_DIR=" + self.exec_config.openfoam_folder
+        prepare_call += "; "
+        prepare_call += ". " + "$HOME/prog/scientific/openfoam/etc/bashrc"
+        prepare_call += "; "
+        prepare_call += "cd " + self.exec_config.execution_folder
+        try:
+            subprocess.call(["{}; {} > {}".format(prepare_call, self.openfoam_solver, self.result_file)], shell=True)
+        except OSError:
+            _logger.error("{} not found.".format(self.openfoam_solver))
+            _logger.error("Please make sure you are using modified version of OpenFOAM and env is prepared")
 
     def __parse_time(self, text):
         found_exec = re.findall(r'ExecutionTime = (\d+.?\d*) s', text)[-1]
@@ -126,6 +134,8 @@ class Executor:
 
         max_value = max(float_val, key=abs)
         _logger.info("Max (Min) {}: {}".format(param_to_parse, max_value))
+        # Save to map
+        self.results[param_to_parse] = max_value
 
         # Save result to file
         file_parsed_result = "{}{}-{}".format(self.result_dir, param_to_parse, self.parsed_name)
@@ -149,3 +159,6 @@ class Executor:
             self.__parse_time(contents)
         else:
             self.__parse_output(param_to_parse, contents)
+
+    def get_results(self):
+        return self.results
