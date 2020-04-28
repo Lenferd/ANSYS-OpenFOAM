@@ -8,7 +8,7 @@ from configs.fragmentation import FragmentationConfig
 from configs.execution import ExecutionConfig
 from utils.logger import Logger, LogLvl
 
-_logger = Logger(LogLvl.LOG_INFO)
+_logger = Logger(LogLvl.LOG_DEBUG)
 
 
 class RailMeshGenerator(SimpleBlockMeshGenerator):

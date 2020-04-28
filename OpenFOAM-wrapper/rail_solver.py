@@ -34,12 +34,16 @@ class RailSolver:
         self.execution_config.output_dir = self.execution_config.execution_folder + "out/"
         self.execution_config.prepare_env_script = "$HOME/prog/scientific/openfoam/etc/bashrc"
 
-    def set_plane_sizes(self, l1, l2, l3):
-        self.l1 = l1
-        self.l2 = l2
-        self.l3 = l3
-        self.mesh_config.height_distance = [100, 100]
-        self.mesh_config.width_lines = [l1, l2, l3]
+    def set_plane_sizes(self, width_cuts):
+        self.mesh_config.width_lines = width_cuts
+
+        print("==== Points: {}".format(self.mesh_config.width_lines))
+        print("==== Am of point: {}".format(len(self.mesh_config.width_lines)))
+
+        # Calculate height based on amount of cuts
+        height = 300 / len(width_cuts)
+        self.mesh_config.height_distance = [height] * (len(width_cuts) - 1)
+
         self.mesh_config.length = 1000
 
         mesh = RailMeshGenerator(self.mesh_config, self.fragmentation_config, self.execution_config)
@@ -76,24 +80,31 @@ class RailSolver:
     # Weight (minimum should be)
     def criterion_0(self):
         print("==== mass criterion_0")
-        # TODO add for loop for this
-        w_bottom_block = 0.5 * (self.mesh_config.width_lines[0] + self.mesh_config.width_lines[1]) \
-                         * self.mesh_config.height_distance[0] * self.mesh_config.length * self.k_mm_to_m
-        w_bottom_block = w_bottom_block * self.k_density
+        weight = 0
 
-        w_middle_block = 0.5 * (self.mesh_config.width_lines[1] + self.mesh_config.width_lines[2]) \
-                         * self.mesh_config.height_distance[1] * self.mesh_config.length * self.k_mm_to_m
-        w_middle_block = w_middle_block * self.k_density
+        for i in range(len(self.mesh_config.width_lines)):
+            volume = 0.5 * (self.mesh_config.width_lines[i] + self.mesh_config.width_lines[i+1]) \
+                         * self.mesh_config.height_distance[i] * self.mesh_config.length * self.k_mm_to_m
+            weight += volume * self.k_density
 
-        w_top_block = 0.5 * (self.mesh_config.width_lines[2] + self.mesh_config.width_lines[3]) \
-                         * self.mesh_config.height_distance[2] * self.mesh_config.length * self.k_mm_to_m
-        w_top_block = w_top_block * self.k_density
 
-        print("w_bottom_block {}".format(w_bottom_block))
-        print("w_middle_block {}".format(w_middle_block))
-        print("w_top_block {}".format(w_top_block))
+        # w_bottom_block = 0.5 * (self.mesh_config.width_lines[0] + self.mesh_config.width_lines[1]) \
+        #                  * self.mesh_config.height_distance[0] * self.mesh_config.length * self.k_mm_to_m
+        # w_bottom_block = w_bottom_block * self.k_density
+        #
+        # w_middle_block = 0.5 * (self.mesh_config.width_lines[1] + self.mesh_config.width_lines[2]) \
+        #                  * self.mesh_config.height_distance[1] * self.mesh_config.length * self.k_mm_to_m
+        # w_middle_block = w_middle_block * self.k_density
+        #
+        # w_top_block = 0.5 * (self.mesh_config.width_lines[2] + self.mesh_config.width_lines[3]) \
+        #                  * self.mesh_config.height_distance[2] * self.mesh_config.length * self.k_mm_to_m
+        # w_top_block = w_top_block * self.k_density
 
-        weight = w_bottom_block + w_middle_block + w_top_block
+        # print("w_bottom_block {}".format(w_bottom_block))
+        # print("w_middle_block {}".format(w_middle_block))
+        # print("w_top_block {}".format(w_top_block))
+
+        # weight = w_bottom_block + w_middle_block + w_top_block
         print(weight)
         return weight
 
@@ -123,7 +134,7 @@ if __name__ == '__main__':
 
     beamSolver = RailSolver()
     # first - height, second - width
-    beamSolver.set_plane_sizes(points[0], points[1], points[2])
+    beamSolver.set_plane_sizes(points)
 
     result = None
     if function == "constraint.0":

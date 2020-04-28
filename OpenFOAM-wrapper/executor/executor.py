@@ -13,8 +13,8 @@ _logger = Logger(LogLvl.LOG_INFO)
 
 
 class Executor:
-    openfoam_solver = "solidEquilibriumDisplacementFoamMod"
-    # openfoam_solver = "solidDisplacementFoamMod"
+    # openfoam_solver = "solidEquilibriumDisplacementFoamMod"
+    openfoam_solver = "solidDisplacementFoamMod"
 
     def __init__(self, exec_conf: ExecutionConfig, mesh_conf, fragmentation_conf: FragmentationConfig):
         _logger.info("Solver: {}".format(self.openfoam_solver))
