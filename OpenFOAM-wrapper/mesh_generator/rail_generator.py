@@ -5,9 +5,10 @@ from mesh_generator.simple_generator import SimpleBlockMeshGenerator
 from mesh_generator.template import BOUNDARY_TEMPLATE, MESH_FILE_TEMPLATE
 from configs.mesh import RailMeshConfig
 from configs.fragmentation import FragmentationConfig
+from configs.execution import ExecutionConfig
 from utils.logger import Logger, LogLvl
 
-_logger = Logger(LogLvl.LOG_INFO)
+_logger = Logger(LogLvl.LOG_DEBUG)
 
 
 class RailMeshGenerator(SimpleBlockMeshGenerator):
@@ -41,7 +42,8 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
         self.x_lines = self.mesh_config.width_lines
         self.y_lines = self.mesh_config.height_distance
 
-        self._check_points_restriction()
+        # FIXME At least it will lead to no very correct result I think. I don't know what can happen without it.
+        # self._check_points_restriction()
 
         middle_line_x = max(self.x_lines) / 2
         length = self.mesh_config.length
@@ -223,8 +225,12 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
     def _generate_mesh():
         super().generate_mesh()
 
-    def __init__(self, mesh_config: RailMeshConfig, fragmentation_config: FragmentationConfig):
+    def __init__(self, mesh_config: RailMeshConfig, fragmentation_config: FragmentationConfig,
+                 exec_config: ExecutionConfig = ExecutionConfig()):
         self.mesh_config = mesh_config
         self.fragmentation_config = fragmentation_config
+        self.exec_config = exec_config
 
         self.out_file = "system/blockMeshDict"
+        if self.exec_config is not None:
+            self.out_file = self.exec_config.execution_folder + self.out_file
