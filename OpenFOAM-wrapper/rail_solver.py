@@ -10,31 +10,35 @@ from mesh_generator.rail_generator import RailMeshGenerator
 
 from sys import argv
 
-
 # TODO Remove unnecessary comments
 # TODO use subprocess.getoutput() - where (?)
+
+MIDDLE_LINE_ALGO = "middle_line"
+LEFT_LINE_ALGO = "left_line"
+
 
 class RailSolver:
     def __init__(self):
         # TODO Should we also use those values?
-        self.k_full_height = 300
+        self.k_full_height = 400
         self.k_length = 1000
 
         self.k_max_deformation = 2.139e-6
         self.k_max_stress = 775900
         self.k_density = 7850
         self.k_mm_to_m = 0.001
+        self.k_approach = LEFT_LINE_ALGO
 
         # Mesh config
         self.mesh_config = RailMeshConfig()
 
         # Fragmentation config
-        self.fragmentation_config = FragmentationConfig(6, 6, 6)
+        self.fragmentation_config = FragmentationConfig(1, 1, 6)
 
         # Exec config
         self.execution_config = ExecutionConfig()
         # FIXME Hardcoded
-        self.execution_config.execution_folder = "/home/lenferd/OpenFOAM/lenferd-v1906/run/rail-20-04-29/"
+        self.execution_config.execution_folder = "/home/lenferd/OpenFOAM/lenferd-v1906/run/rail-20-05-04/"
         self.execution_config.output_dir = self.execution_config.execution_folder + "out/"
         # FIXME Hardcoded
         self.execution_config.prepare_env_script = "$HOME/prog/scientific/openfoam/etc/bashrc"
@@ -42,9 +46,18 @@ class RailSolver:
     def set_plane_sizes(self, width_cuts):
         # Specify mesh config
         self.mesh_config.width_lines = width_cuts
+
         # Calculate height based on amount of cuts
-        height = self.k_full_height / len(width_cuts)
-        self.mesh_config.height_distance = [height] * (len(width_cuts) - 1)
+        number_of_cuts = 0
+        if self.k_approach == MIDDLE_LINE_ALGO:
+            number_of_cuts = len(width_cuts)
+        else:
+            assert (len(width_cuts) % 2 == 0)
+            number_of_cuts = int(len(width_cuts) / 2)
+
+        height = self.k_full_height / number_of_cuts
+        self.mesh_config.height_distance = [height] * (number_of_cuts - 1)
+
         self.mesh_config.length = self.k_length
 
         # Create mesh

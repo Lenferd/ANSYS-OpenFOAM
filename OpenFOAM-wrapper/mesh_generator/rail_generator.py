@@ -9,6 +9,8 @@ from configs.execution import ExecutionConfig
 from utils.logger import Logger, LogLvl
 
 _logger = Logger(LogLvl.LOG_DEBUG)
+MIDDLE_LINE_ALGO = "middle_line"
+LEFT_LINE_ALGO = "left_line"
 
 
 class RailMeshGenerator(SimpleBlockMeshGenerator):
@@ -30,23 +32,56 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
                         "height: " + str(self.fragmentation_config.height),
                         "length: " + str(self.fragmentation_config.length)))
 
-    def _check_points_restriction(self):
-        for line in self.x_lines:
-            assert (line % 2 == 0)
-        for line in self.y_lines:
-            assert (line % 2 == 0)
-        assert (self.mesh_config.length % 2 == 0)
+    # TODO This implementation contains workaround, as it's use two lines width as value of two points
+    def __left_line_points_calc(self):
+        length = self.mesh_config.length
+        front_plane = []
+        back_plane = []
 
-    def _calculate_points(self):
-        # TODO add check, that convertToMeters is 0.001
-        self.x_lines = self.mesh_config.width_lines
-        self.y_lines = self.mesh_config.height_distance
+        if len(self.x_lines) % 2 != 0:
+            raise Exception("Unable to use left line points generator, if amount of points % 2 != 0")
 
-        # FIXME At least it will lead to no very correct result I think. I don't know what can happen without it.
-        # self._check_points_restriction()
+        it = 0
+        it_y = 0
+        # Need two create front and back plane (based on 4 point).
+        # Step is 2, as we are using different lines width as first point coordinate + width
+        while it < len(self.x_lines):
+            # Here we are creating line for plane
+            front_plane.append([Point(self.x_lines[it], sum(self.y_lines[0:it_y]), 0),
+                                Point(self.x_lines[it] + self.x_lines[it + 1], sum(self.y_lines[0:it_y]), 0)])
+            back_plane.append([Point(self.x_lines[it], sum(self.y_lines[0:it_y]), length),
+                               Point(self.x_lines[it] + self.x_lines[it + 1], sum(self.y_lines[0:it_y]), length)])
+            it += 2
+            it_y += 1
+
+        _logger.debug("Front plane")
+        for line in front_plane:
+            _logger.debug("{}".format(line))
+
+        _logger.debug("Back plane")
+        for line in back_plane:
+            _logger.debug("{}".format(line))
+
+        # Should it also be rewritten?
+        self.points = []
+        for plane in [front_plane, back_plane]:
+            # Reverse clock order
+            for line in plane:
+                # First, right side of line (from bottom to top)
+                self.points.append(line[1].foam_print())
+            for line in plane[::-1]:
+                # Second, left side of plane (from top to bottom)
+                self.points.append(line[0].foam_print())
+
+        _logger.debug("Generated points:")
+        _logger.debug("{}".format(self.points))
+        self.points_text = "\n".join(self.points)
+        # print(self.points_text)
+
+    def __middle_line_points_calc(self):
+        length = self.mesh_config.length
 
         middle_line_x = max(self.x_lines) / 2
-        length = self.mesh_config.length
         front_plane = []
         back_plane = []
 
@@ -79,6 +114,24 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
         self.points_text = "\n".join(self.points)
         # print(self.points_text)
 
+    def _calculate_points(self):
+        # TODO add check, that convertToMeters is 0.001
+        self.x_lines = self.mesh_config.width_lines
+        self.y_lines = self.mesh_config.height_distance
+
+        # OpenFOAM support working with float values of points, so %2 this restriction is not necessary
+
+        if (len(self.x_lines) - 2) / 2 == len(self.y_lines):
+            self.calc_algorithm = LEFT_LINE_ALGO
+            print("[WARNING] Left line mesh generating algorithm")
+        else:
+            self.calc_algorithm = MIDDLE_LINE_ALGO
+
+        if self.calc_algorithm == MIDDLE_LINE_ALGO:
+            self.__middle_line_points_calc()
+        if self.calc_algorithm == LEFT_LINE_ALGO:
+            self.__left_line_points_calc()
+
     def _check_fragmentation_restriction(self):
         mesh_elem_size_mm = self.fragmentation_config.elem_size_mm
         for line in self.x_lines:
@@ -88,7 +141,10 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
         assert (self.mesh_config.length >= mesh_elem_size_mm)
 
     def _calculate_fragmentation(self):
-        self._check_fragmentation_restriction()
+        # FIXME Some check also should exist for left line algorithm
+        if self.calc_algorithm == MIDDLE_LINE_ALGO:
+            self._check_fragmentation_restriction()
+
         indexes = " ".join(map(str, range(len(self.points))))
 
         # x - width, y - height, z - length
@@ -98,8 +154,16 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
 
         front_start = 0
         front_end = len(self.x_lines) * 2 - 1
+
+        if self.calc_algorithm == LEFT_LINE_ALGO:
+            front_end = len(self.x_lines) - 1
+
         back_start = front_end + 1
         back_end = len(self.x_lines) * 4 - 1
+
+        if self.calc_algorithm == LEFT_LINE_ALGO:
+            back_end = len(self.x_lines) * 2 - 1
+
         _logger.debug("front_start: {}".format(front_start))
         _logger.debug("front_end: {}".format(front_end))
         _logger.debug("back_start: {}".format(back_start))
@@ -138,8 +202,15 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
         # FIXME Duplication
         front_start = 0
         front_end = len(self.x_lines) * 2 - 1
+
+        if self.calc_algorithm == LEFT_LINE_ALGO:
+            front_end = len(self.x_lines) - 1
+
         back_start = front_end + 1
         back_end = len(self.x_lines) * 4 - 1
+
+        if self.calc_algorithm == LEFT_LINE_ALGO:
+            back_end = len(self.x_lines) * 2 - 1
 
         name = "frontTractionEnd"
         faces = []

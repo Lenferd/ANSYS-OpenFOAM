@@ -79,7 +79,11 @@ class RailMeshConfig:
         if amount_height != amount_width - 1:
             print("Amount of height values should be == width values - 1. Now {} != {} - 1".format(amount_height,
                                                                                                    amount_width))
-            assert (amount_height == amount_width - 1)
+            if amount_height != amount_width - 1:
+                if (amount_width - 2) / 2 == amount_height:
+                    print("[WARNING] No default mesh generator being used (left line gen)")
+                else:
+                    assert(amount_height == amount_width - 1)
 
         return mesh_conf
 
