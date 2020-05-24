@@ -1,4 +1,7 @@
 from executor.executor import Executor
+import os
+from sys import argv
+
 from argparse import ArgumentParser
 from configs.mesh import add_mesh_switch_arguments
 from configs.mesh import SimpleBlockMeshConfig, SimpleBlockMeshArguments
@@ -33,15 +36,17 @@ class RailSolver:
         self.mesh_config = RailMeshConfig()
 
         # Fragmentation config
-        self.fragmentation_config = FragmentationConfig(1, 1, 6)
+        self.fragmentation_config = FragmentationConfig(6, 6, 6)
 
         # Exec config
         self.execution_config = ExecutionConfig()
         # FIXME Hardcoded
-        self.execution_config.execution_folder = "/home/lenferd/OpenFOAM/lenferd-v1906/run/rail-20-05-04/"
-        self.execution_config.output_dir = self.execution_config.execution_folder + "out/"
+        # FIXME Aware of potential duplication "OpenFOAM/OpenFOAM-dev/OpenFOAM-dev"
+        self.execution_config.openfoam_folder = "/home/lenferd/prog/OpenFOAM"
+        self.execution_config.execution_folder = "/home/lenferd/OpenFOAM/lenferd-dev/run/gl-cantileverBeam-20200524"
+        self.execution_config.output_dir = os.path.join(self.execution_config.execution_folder, "out")
         # FIXME Hardcoded
-        self.execution_config.prepare_env_script = "$HOME/prog/scientific/openfoam/etc/bashrc"
+        self.execution_config.prepare_env_script = "/home/lenferd/prog/OpenFOAM/OpenFOAM-dev/etc/bashrc_modified"
 
     def set_plane_sizes(self, width_cuts):
         # Specify mesh config

@@ -32,7 +32,7 @@ class BeamSolver:
 
         self.execution_config.execution_folder = "/home/lenferd/OpenFOAM/lenferd-v1906/run/beamEndLoad-20-04-25/"
         self.execution_config.output_dir = self.execution_config.execution_folder + "out/"
-        self.execution_config.prepare_env_script = "$HOME/prog/scientific/openfoam/etc/bashrc"
+        self.execution_config.prepare_env_script = "$HOME/prog/OpenFOAM/OpenFOAM-dev/etc/bashrc_modified"
 
     def set_plane_sizes(self, height, width):
         self.mesh_config.length_mm = 1000

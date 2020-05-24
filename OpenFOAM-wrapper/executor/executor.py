@@ -64,8 +64,8 @@ class Executor:
             fragmentation_conf.height,
             fragmentation_conf.length)
 
-        self.result_file = "{}result_{}_{}.txt".format(self.result_dir, result_file_geom_prefix,
-                                                       fragmentation_options_line)
+        result_file_name = "result_{}_{}.txt".format(result_file_geom_prefix, fragmentation_options_line)
+        self.result_file = os.path.join(self.result_dir, result_file_name)
         self.parsed_name = datetime.datetime.now().strftime("%Y-%m-%d-%H.txt")
 
     def run(self):
@@ -74,16 +74,16 @@ class Executor:
         _logger.info("===== End calculation\n\n")
 
         _logger.info("\n\n===== Run result parsing")
-        self.__parse_output_from_file("sigma")
+        self.__parse_output_from_file("sigmaEq")
         self.__parse_output_from_file("D")
         self.__parse_output_from_file("Time")
         _logger.info("===== End result parsing\n\n")
 
     def __run_execution(self):
         # FIXME no check if none
-        prepare_call = "export WM_PROJECT_DIR=" + self.exec_config.openfoam_folder
+        prepare_call = "export FOAM_INST_DIR=" + self.exec_config.openfoam_folder
         prepare_call += "; "
-        prepare_call += ". " + "$HOME/prog/scientific/openfoam/etc/bashrc"
+        prepare_call += ". " + "$HOME/prog/OpenFOAM/OpenFOAM-dev/etc/bashrc_modified"
         prepare_call += "; "
         prepare_call += "cd " + self.exec_config.execution_folder
         try:
@@ -99,7 +99,8 @@ class Executor:
         clock_time = float(found_clock)
 
         # Save result to file
-        file_parsed_result = "{}{}-{}".format(self.result_dir, "time", self.parsed_name)
+        file_parsed_name = "{}-{}".format("time", self.parsed_name)
+        file_parsed_result = os.path.join(self.result_dir, file_parsed_name)
         formatted_result = "{geometry}\t{fragmentation}\t{exec_time}\t{clock_time}\n".format(
             geometry=self.geom_values,
             fragmentation=self.fragmentation_values,
@@ -138,7 +139,8 @@ class Executor:
         self.results[param_to_parse] = max_value
 
         # Save result to file
-        file_parsed_result = "{}{}-{}".format(self.result_dir, param_to_parse, self.parsed_name)
+        file_parsed_name = "{}-{}".format(param_to_parse, self.parsed_name)
+        file_parsed_result = os.path.join(self.result_dir, file_parsed_name)
         formatted_result = "{geometry}\t{fragmentation}\t{value}\n".format(geometry=self.geom_values,
                                                                            fragmentation=self.fragmentation_values,
                                                                            value=max_value)

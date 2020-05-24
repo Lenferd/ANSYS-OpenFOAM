@@ -5,9 +5,8 @@ class ExecutionConfig:
     def __init__(self, output_dir="out/"):
         self.output_dir = output_dir
         self.execution_folder = "./"
-        # self.prepare_env_script = "$HOME/openfoam/etc/bashrc"
-        self.prepare_env_script = "$HOME/prog/scientific/openfoam/etc/bashrc"
-        self.openfoam_folder = "/home/lenferd/prog/scientific/openfoam"
+        self.prepare_env_script = "[ERROR]_OPENFOAM_ENV_SCRIPT_NOT_SPECIFIED" #"$HOME/OpenFOAM/OpenFOAM-dev/etc/bashrc_modified"
+        self.openfoam_folder = "[ERROR]_OPENFOAM_FOLDER_NOT_SPECIFIED"  #"$HOME/OpenFOAM/OpenFOAM-dev"
 
     @staticmethod
     def create_from_args(args):

@@ -1,3 +1,4 @@
+import os
 from string import Template
 
 from mesh_generator.point import Point
@@ -304,4 +305,4 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
 
         self.out_file = "system/blockMeshDict"
         if self.exec_config is not None:
-            self.out_file = self.exec_config.execution_folder + self.out_file
+            self.out_file = os.path.join(self.exec_config.execution_folder, self.out_file)

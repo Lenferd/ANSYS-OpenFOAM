@@ -1,4 +1,5 @@
 import subprocess
+import os
 from string import Template
 
 from configs.fragmentation import FragmentationConfig
@@ -18,7 +19,7 @@ class SimpleBlockMeshGenerator:
         self.out_file = "system/blockMeshDict"
 
         if self.exec_config is not None:
-            self.out_file = execution_config.execution_folder + self.out_file
+            self.out_file = os.path.join(execution_config.execution_folder, self.out_file)
 
     def create(self, custom_out_file=None):
         _logger.info("\n\n===== Run geometry generating")
@@ -173,27 +174,28 @@ class SimpleBlockMeshGenerator:
     def generate_mesh(self):
         # FIXME temporary solution
         # FIXME Not check that is not None
-        openfoam_folder = self.exec_config.openfoam_folder
+        openfoam_folder = "OPENFOAM FOLDER NOT SPECIFIED"
         if self.exec_config is not None:
             if self.exec_config.openfoam_folder is not None:
                 openfoam_folder = self.exec_config.openfoam_folder
 
-        env_script = "$HOME/prog/scientific/openfoam/etc/bashrc"
+        env_script = "ENV SCRIPT NOT SPECIFIED"
         if self.exec_config is not None:
             if self.exec_config.prepare_env_script is not None:
                 env_script = self.exec_config.prepare_env_script
 
-        # Make sure script have commented lines, where WM_PROJECT_DIR is set
-        prepare_call = "export WM_PROJECT_DIR=" + openfoam_folder
+        # Make sure script have commented lines, where FOAM_INST_DIR is set
+        prepare_call = "export FOAM_INST_DIR=" + openfoam_folder
         prepare_call += "; "
         prepare_call += ". " + env_script
         prepare_call += "; "
         prepare_call += "cd " + self.exec_config.execution_folder
-        # exec_folder_export = "export WM_PROJECT_DIR=" + self.exec_config.openfoam_folder
-        # env_preparing = ". " + "$HOME/prog/scientific/openfoam/etc/bashrc"
         try:
             # FIXME get back log for debug or info
             # subprocess.call(["{}; {} > /dev/null".format(prepare_call, "blockMesh")], shell=True)
-            subprocess.call(["{}; {}".format(prepare_call, "blockMesh")], shell=True)
+            # FIXME Debug
+            command = "{}; {}".format(prepare_call, "blockMesh")
+            print(command)
+            subprocess.call([command], shell=True)
         except OSError:
             raise OSError("blockMesh not found. Please check that you have prepared OpenFOAM environment")
