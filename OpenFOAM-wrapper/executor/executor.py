@@ -133,7 +133,13 @@ class Executor:
 
         _logger.debug("Values as float: {}".format(float_val))
 
-        max_value = max(float_val, key=abs)
+        max_value = -1.
+        # FIXME Workaround for cantilever beam to use D which is with -D flag
+        if param_to_parse == "sigmaEq":
+            max_value = max(float_val)
+        elif param_to_parse == "D":
+            max_value = abs(max(float_val, key=abs))
+
         _logger.info("Max (Min) {}: {}".format(param_to_parse, max_value))
         # Save to map
         self.results[param_to_parse] = max_value

@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 class FragmentationConfig:
     elem_size_mm = 20
 
-    def __init__(self, width_fragmentation=12, height_fragmentation=12, length_fragmentation=20):
+    def __init__(self, width_fragmentation=12, height_fragmentation=12, length_fragmentation=10):
         self.width = width_fragmentation
         self.height = height_fragmentation
         self.length = length_fragmentation
