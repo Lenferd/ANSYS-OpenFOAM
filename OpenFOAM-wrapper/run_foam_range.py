@@ -1,3 +1,5 @@
+import os
+
 from executor.executor import Executor
 from argparse import ArgumentParser
 from configs.mesh import SimpleBlockMeshConfig, SimpleBlockMeshArguments
@@ -16,10 +18,18 @@ if __name__ == '__main__':
     execution_conf = ExecutionConfig.create_from_args(args)
 
     # FIXME Hardcoded
-    execution_conf.execution_folder = "/home/lenferd/OpenFOAM/lenferd-dev/run/cantieverBeam-20200528"
-    print("[!!!!] WARNING: execution folder is hardcoded and is : {}".format(execution_conf.execution_folder))
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    rail_pos = script_dir.rfind("Beam")
+    foam_pos = script_dir.rfind("OpenFOAM-wrapper")
+    if rail_pos == -1 or foam_pos == -1:
+        raise Exception("Failed to find Beam folder in path")
+    else:
+        execution_conf.execution_folder = script_dir[:foam_pos]
+
+    print("[!!!!] WARNING: prepare script and openfoam folder is hardcoded")
     execution_conf.prepare_env_script = "/home/lenferd/prog/OpenFOAM/OpenFOAM-dev/etc/bashrc_modified"
     execution_conf.openfoam_folder = "/home/lenferd/prog/OpenFOAM/"
+
 
     # TODO No fragmentation iters for now
     for width in range(args.geom_width_start, args.geom_width_end + 1, args.geom_width_diff):
