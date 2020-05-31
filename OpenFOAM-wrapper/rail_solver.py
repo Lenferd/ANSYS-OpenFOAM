@@ -1,7 +1,6 @@
-from executor.executor import Executor
 import os
-from sys import argv
 
+from executor.executor import Executor
 from argparse import ArgumentParser
 from configs.mesh import add_mesh_switch_arguments
 from configs.mesh import SimpleBlockMeshConfig, SimpleBlockMeshArguments
@@ -26,24 +25,40 @@ class RailSolver:
         self.k_full_height = 400
         self.k_length = 1000
 
-        self.k_max_deformation = 2.139e-6
-        self.k_max_stress = 775900
+        self.k_max_deformation = 1e-3
+        self.k_max_stress = 10e+9
         self.k_density = 7850
         self.k_mm_to_m = 0.001
+        # FIXME Manual switch required
         self.k_approach = LEFT_LINE_ALGO
 
         # Mesh config
         self.mesh_config = RailMeshConfig()
 
         # Fragmentation config
-        self.fragmentation_config = FragmentationConfig(6, 6, 6)
+        self.fragmentation_config = FragmentationConfig(5, 5, 10)
 
         # Exec config
         self.execution_config = ExecutionConfig()
+
         # FIXME Hardcoded
         # FIXME Aware of potential duplication "OpenFOAM/OpenFOAM-dev/OpenFOAM-dev"
         self.execution_config.openfoam_folder = "/home/lenferd/prog/OpenFOAM"
-        self.execution_config.execution_folder = "/home/lenferd/OpenFOAM/lenferd-dev/run/gl-cantileverBeam-20200524"
+        # self.execution_config.execution_folder = os.path.abspath(os.getcwd())
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # Fixme hardcoded. Expected format: /home/lenferd/OpenFOAM/lenferd-v1906/run/rail-20-05-06-2/OpenFOAM-wrapper
+        #  /rail_solver.py
+        rail_pos = script_dir.rfind("Beam")
+        foam_pos = script_dir.rfind("OpenFOAM-wrapper")
+        if rail_pos == -1 or foam_pos == -1:
+            # FIXME Hardcoded
+            # raise Exception("rail folder (openfoam project folder) or OpenFOAM-wrapper not found in path: {}".format(script_dir))
+            print("HARDCORED value is used!")
+            self.execution_config.execution_folder = "/home/lenferd/OpenFOAM/lenferd-dev/run/glsymm-cantileverBeam-20200524"
+        else:
+            self.execution_config.execution_folder = script_dir[:foam_pos]
+
+        print("[D] execution_folder: {}".format(self.execution_config.execution_folder))
         self.execution_config.output_dir = os.path.join(self.execution_config.execution_folder, "out")
         # FIXME Hardcoded
         self.execution_config.prepare_env_script = "/home/lenferd/prog/OpenFOAM/OpenFOAM-dev/etc/bashrc_modified"
@@ -60,7 +75,7 @@ class RailSolver:
             assert (len(width_cuts) % 2 == 0)
             number_of_cuts = int(len(width_cuts) / 2)
 
-        height = self.k_full_height / number_of_cuts
+        height = self.k_full_height / (number_of_cuts - 1)
         self.mesh_config.height_distance = [height] * (number_of_cuts - 1)
 
         self.mesh_config.length = self.k_length
@@ -102,12 +117,20 @@ class RailSolver:
         print("==== mass criterion_0")
         weight = 0
 
-        for i in range(len(self.mesh_config.width_lines)):
-            volume = 0.5 * (self.mesh_config.width_lines[i] + self.mesh_config.width_lines[i + 1]) \
-                     * self.mesh_config.height_distance[i] * self.mesh_config.length * self.k_mm_to_m
-            weight += volume * self.k_density
+        if self.k_approach == MIDDLE_LINE_ALGO:
+            for i in range(len(self.mesh_config.width_lines) - 1):
+                volume = 0.5 * (self.mesh_config.width_lines[i] * self.k_mm_to_m + self.mesh_config.width_lines[i + 1] * self.k_mm_to_m) \
+                         * self.mesh_config.height_distance[i] * self.k_mm_to_m * self.mesh_config.length * self.k_mm_to_m
+                weight += volume * self.k_density
+        else:
+            for i in range(len(self.mesh_config.height_distance)):
+                # Second point is width itself
+                volume = 0.5 * (self.mesh_config.width_lines[i * 2 + 1] * self.k_mm_to_m + self.mesh_config.width_lines[(i + 1) * 2 + 1] * self.k_mm_to_m ) \
+                         * self.mesh_config.height_distance[i] * self.k_mm_to_m * self.mesh_config.length * self.k_mm_to_m
+                print("volume {} ".format(volume))
+                weight += volume * self.k_density
 
-        print(weight)
+        print("Weight: {}".format(weight))
         return weight
 
 

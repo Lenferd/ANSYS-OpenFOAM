@@ -33,7 +33,8 @@ if __name__ == '__main__':
     execution_conf = ExecutionConfig.create_from_args(args)
 
     # FIXME Hardcoded
-    execution_conf.execution_folder = "/home/lenferd/OpenFOAM/lenferd-dev/run/cantieverBeam-20200523"
+    execution_conf.execution_folder = "/home/lenferd/OpenFOAM/lenferd-dev/run/cantieverBeam-20200528"
+    print("[!!!!] WARNING: execution folder is hardcoded and is : {}".format(execution_conf.execution_folder))
     execution_conf.prepare_env_script = "/home/lenferd/prog/OpenFOAM/OpenFOAM-dev/etc/bashrc_modified"
     execution_conf.openfoam_folder = "/home/lenferd/prog/OpenFOAM/"
 

@@ -124,7 +124,7 @@ class SimpleBlockMeshGenerator:
         );
     }
 
-    fixedEnd
+    rearFixedEnd
     {
         type patch;
         faces
@@ -133,7 +133,7 @@ class SimpleBlockMeshGenerator:
         );
     }
 
-    tractionEnd
+    frontTractionEnd
     {
         type patch;
         faces
