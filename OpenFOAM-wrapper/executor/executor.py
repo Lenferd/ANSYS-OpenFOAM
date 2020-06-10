@@ -8,8 +8,10 @@ from mesh_generator.simple_generator import SimpleBlockMeshConfig, Fragmentation
 from mesh_generator.rail_generator import RailMeshConfig
 from configs.execution import ExecutionConfig
 from utils.logger import Logger, LogLvl
+from utils.profiler import Profiler
 
-_logger = Logger(LogLvl.LOG_INFO)
+_logger = Logger(LogLvl.LOG_ERROR)
+enable_profiler = os.environ.get('PROFILER')
 
 
 class Executor:
@@ -17,6 +19,7 @@ class Executor:
     openfoam_solver = "solidDisplacementFoamMod"
 
     def __init__(self, exec_conf: ExecutionConfig, mesh_conf, fragmentation_conf: FragmentationConfig):
+        self._profiler = Profiler(enable_profiler)
         _logger.info("Solver: {}".format(self.openfoam_solver))
         self.exec_config = exec_conf
         self.result_dir = exec_conf.output_dir
@@ -68,18 +71,24 @@ class Executor:
         self.result_file = os.path.join(self.result_dir, result_file_name)
         self.parsed_name = datetime.datetime.now().strftime("%Y-%m-%d-%H.txt")
 
+    def __del__(self):
+        self._profiler.print_report()
+
     def run(self):
         _logger.info("\n\n===== Run calculation")
         self.__run_execution()
         _logger.info("===== End calculation\n\n")
 
         _logger.info("\n\n===== Run result parsing")
+        self._profiler.start("Parse results")
         self.__parse_output_from_file("sigmaEq")
         self.__parse_output_from_file("D")
         self.__parse_output_from_file("Time")
+        self._profiler.stop("Parse results")
         _logger.info("===== End result parsing\n\n")
 
     def __run_execution(self):
+        self._profiler.start("Run solver")
         # FIXME no check if none
         prepare_call = "export FOAM_INST_DIR=" + self.exec_config.openfoam_folder
         prepare_call += "; "
@@ -91,6 +100,7 @@ class Executor:
         except OSError:
             _logger.error("{} not found.".format(self.openfoam_solver))
             _logger.error("Please make sure you are using modified version of OpenFOAM and env is prepared")
+        self._profiler.stop("Run solver")
 
     def __parse_time(self, text):
         found_exec = re.findall(r'ExecutionTime = (\d+.?\d*) s', text)[-1]

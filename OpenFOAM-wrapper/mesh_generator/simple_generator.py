@@ -7,7 +7,10 @@ from configs.mesh import SimpleBlockMeshConfig
 from configs.execution import ExecutionConfig
 from mesh_generator.template import MESH_FILE_TEMPLATE
 from utils.logger import LogLvl, Logger
-_logger = Logger(LogLvl.LOG_DEBUG)
+from utils.profiler import Profiler
+
+_logger = Logger(LogLvl.LOG_ERROR)
+enable_profiler = os.environ.get('PROFILER')
 
 
 class SimpleBlockMeshGenerator:
@@ -21,8 +24,14 @@ class SimpleBlockMeshGenerator:
         if self.exec_config is not None:
             self.out_file = os.path.join(execution_config.execution_folder, self.out_file)
 
+        self._profiler = Profiler(enable_profiler)
+
+    def __del__(self):
+        self._profiler.print_report()
+
     def create(self, custom_out_file=None):
         _logger.info("\n\n===== Run geometry generating")
+        self._profiler.start("Geometry creating")
         self._print_configuration()
 
         self._calculate_points()
@@ -38,11 +47,14 @@ class SimpleBlockMeshGenerator:
             file_to_write = 0
 
         self.save_geometry(text, file_to_write)
+        self._profiler.stop("Geometry creating")
         _logger.info("===== End geometry generating\n\n")
 
     def generate(self):
         _logger.info("\n\n===== Run block mesh generating")
+        self._profiler.start("Mesh generating")
         self.generate_mesh()
+        self._profiler.stop("Mesh generating")
         # Just because there a lots of logs from blockMesh command
         _logger.info("===== End block mesh generating\n\n")
 
@@ -195,7 +207,10 @@ class SimpleBlockMeshGenerator:
             # subprocess.call(["{}; {} > /dev/null".format(prepare_call, "blockMesh")], shell=True)
             # FIXME Debug
             command = "{}; {}".format(prepare_call, "blockMesh")
-            print(command)
-            subprocess.call([command], shell=True)
+            _logger.info(command)
+            if _logger.log_lvl == LogLvl.LOG_DEBUG:
+                subprocess.call("{}".format(command), shell=True)
+            else:
+                subprocess.call("{} > /dev/null".format(command), shell=True)
         except OSError:
             raise OSError("blockMesh not found. Please check that you have prepared OpenFOAM environment")
