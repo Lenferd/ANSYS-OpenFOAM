@@ -11,6 +11,7 @@ from utils.profiler import Profiler
 
 _logger = Logger(LogLvl.LOG_ERROR)
 enable_profiler = os.environ.get('PROFILER')
+print_mesh_stats = os.environ.get('MESH_STATS')
 
 
 class SimpleBlockMeshGenerator:
@@ -203,12 +204,9 @@ class SimpleBlockMeshGenerator:
         prepare_call += "; "
         prepare_call += "cd " + self.exec_config.execution_folder
         try:
-            # FIXME get back log for debug or info
-            # subprocess.call(["{}; {} > /dev/null".format(prepare_call, "blockMesh")], shell=True)
-            # FIXME Debug
             command = "{}; {}".format(prepare_call, "blockMesh")
             _logger.info(command)
-            if _logger.log_lvl == LogLvl.LOG_DEBUG:
+            if _logger.log_lvl == LogLvl.LOG_DEBUG or print_mesh_stats:
                 subprocess.call("{}".format(command), shell=True)
             else:
                 subprocess.call("{} > /dev/null".format(command), shell=True)

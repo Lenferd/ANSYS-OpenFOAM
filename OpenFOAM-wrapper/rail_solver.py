@@ -21,16 +21,17 @@ LEFT_LINE_ALGO = "left_line"
 
 class RailSolver:
     def __init__(self):
-        # TODO Should we also use those values?
-        self.k_full_height = 400
+        # Only for wo height case
+        self.k_full_height = 30
+        self.wo_height = False
         self.k_length = 1000
 
-        self.k_max_deformation = 1e-3
-        self.k_max_stress = 10e+9
+        self.k_max_deformation = 4.4e-5
+        self.k_max_stress = 3.3e+9
         self.k_density = 7850
         self.k_mm_to_m = 0.001
         # FIXME Manual switch required
-        self.k_approach = LEFT_LINE_ALGO
+        self.k_approach = MIDDLE_LINE_ALGO
 
         # Mesh config
         self.mesh_config = RailMeshConfig()
@@ -64,19 +65,24 @@ class RailSolver:
         self.execution_config.prepare_env_script = "/home/lenferd/prog/OpenFOAM/OpenFOAM-dev/etc/bashrc_modified"
 
     def set_plane_sizes(self, width_cuts):
-        # Specify mesh config
-        self.mesh_config.width_lines = width_cuts
+        if self.wo_height:
+            # Specify mesh config
+            self.mesh_config.width_lines = width_cuts
 
-        # Calculate height based on amount of cuts
-        number_of_cuts = 0
-        if self.k_approach == MIDDLE_LINE_ALGO:
-            number_of_cuts = len(width_cuts)
+            # Calculate height based on amount of cuts
+            number_of_cuts = 0
+            if self.k_approach == MIDDLE_LINE_ALGO:
+                number_of_cuts = len(width_cuts)
+            else:
+                assert (len(width_cuts) % 2 == 0)
+                number_of_cuts = int(len(width_cuts) / 2)
+
+            height = self.k_full_height / (number_of_cuts - 1)
+            self.mesh_config.height_distance = [height] * (number_of_cuts - 1)
         else:
-            assert (len(width_cuts) % 2 == 0)
-            number_of_cuts = int(len(width_cuts) / 2)
-
-        height = self.k_full_height / (number_of_cuts - 1)
-        self.mesh_config.height_distance = [height] * (number_of_cuts - 1)
+            number_of_cuts = int((len(width_cuts) + 1) / 2)
+            self.mesh_config.width_lines = width_cuts[:number_of_cuts]
+            self.mesh_config.height_distance = width_cuts[number_of_cuts:]
 
         self.mesh_config.length = self.k_length
 
@@ -84,6 +90,18 @@ class RailSolver:
         mesh = RailMeshGenerator(self.mesh_config, self.fragmentation_config, self.execution_config)
         mesh.create()
         mesh.generate()
+
+    def __debug_message(self, results):
+        debug = os.environ.get('DEBUG')
+        if debug:
+            print("=== Debug ===")
+            print("python3 " + " ".join(argv[:-1]) + " \"{}\"".format(argv[-1]))
+            print("\"{}\"".format(argv[-1]))
+            print(self.mesh_config.width_lines)
+            self.criterion_0()
+            print("Targets: deform {:.2e}, stress {:.2e}".format(self.k_max_deformation, self.k_max_stress))
+            print("Deform: {:.2e} : {}".format(results["D"], results["D"] < self.k_max_deformation))
+            print("Stress: {:.2e} : {}".format(results["sigmaEq"], results["sigmaEq"] < self.k_max_stress))
 
     # Deformation not more than ...
     def constraint_0(self):
@@ -93,23 +111,19 @@ class RailSolver:
         executor.run()
         results = executor.get_results()
         print("==== D constraint_0")
-        print(results)
-        print(results[deformation_name])
-        print(results[deformation_name] < self.k_max_deformation)
-        print(results[deformation_name] - self.k_max_deformation)
+        self.__debug_message(results)
+
         return results[deformation_name] - self.k_max_deformation
 
     # Stress not more than ...
     def constraint_1(self):
-        stresss_name = "D"
+        stresss_name = "sigmaEq"
         executor = Executor(self.execution_config, self.mesh_config, self.fragmentation_config)
         executor.run()
         results = executor.get_results()
         print("==== stress constraint_1")
-        print(results)
-        print(results[stresss_name])
-        print(results[stresss_name] < self.k_max_stress)
-        print(results[stresss_name] - self.k_max_stress)
+
+        self.__debug_message(results)
         return results[stresss_name] - self.k_max_stress
 
     # Weight (minimum should be)

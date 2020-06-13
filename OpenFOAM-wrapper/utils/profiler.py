@@ -23,15 +23,18 @@ class Profiler:
         self._traces = {}
 
     def start(self, trace_name):
+        if not self._enable: return
         if trace_name not in self._traces:
             self._traces[trace_name] = Trace(trace_name)
         self._traces[trace_name].start()
 
     def stop(self, trace_name):
+        if not self._enable: return
         if trace_name not in self._traces:
             raise Exception("Start trace is not found")
         self._traces[trace_name].end()
 
     def print_report(self):
+        if not self._enable: return
         for key, trace in self._traces.items():
             print(trace)
