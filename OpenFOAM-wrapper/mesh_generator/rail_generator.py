@@ -8,13 +8,28 @@ from configs.mesh import RailMeshConfig
 from configs.fragmentation import FragmentationConfig
 from configs.execution import ExecutionConfig
 from utils.logger import Logger, LogLvl
+from utils.profiler import Profiler
 
-_logger = Logger(LogLvl.LOG_DEBUG)
+_logger = Logger(LogLvl.LOG_ERROR)
 MIDDLE_LINE_ALGO = "middle_line"
 LEFT_LINE_ALGO = "left_line"
 
+enable_profiler = os.environ.get('PROFILER')
+
 
 class RailMeshGenerator(SimpleBlockMeshGenerator):
+    def __init__(self, mesh_config: RailMeshConfig, fragmentation_config: FragmentationConfig,
+                 exec_config: ExecutionConfig = ExecutionConfig()):
+        self.mesh_config = mesh_config
+        self.fragmentation_config = fragmentation_config
+        self.exec_config = exec_config
+
+        self.out_file = "system/blockMeshDict"
+        if self.exec_config is not None:
+            self.out_file = os.path.join(self.exec_config.execution_folder, self.out_file)
+
+        self._profiler = Profiler(enable_profiler)
+
     def create(self, custom_out_file=None):
         super().create(custom_out_file)
 
@@ -184,11 +199,12 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
             ))
 
         self.fragmentation_text = ""
+        # TODO I suppose I missunderstood concept of creating hex from points, so order is YXZ instead of XYZ
         for hex in hexs:
             self.fragmentation_text += "    hex ({}) ({} {} {}) simpleGrading (1.0 1.0 1.0)\n".format(
                 hex,
-                self.fragmentation_config.width,
                 self.fragmentation_config.height,
+                self.fragmentation_config.width,
                 self.fragmentation_config.length)
 
         _logger.info(self.fragmentation_text)
@@ -296,13 +312,3 @@ class RailMeshGenerator(SimpleBlockMeshGenerator):
     @staticmethod
     def _generate_mesh():
         super().generate_mesh()
-
-    def __init__(self, mesh_config: RailMeshConfig, fragmentation_config: FragmentationConfig,
-                 exec_config: ExecutionConfig = ExecutionConfig()):
-        self.mesh_config = mesh_config
-        self.fragmentation_config = fragmentation_config
-        self.exec_config = exec_config
-
-        self.out_file = "system/blockMeshDict"
-        if self.exec_config is not None:
-            self.out_file = os.path.join(self.exec_config.execution_folder, self.out_file)
